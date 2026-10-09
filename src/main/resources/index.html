@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale= 1.0">
+
+<title>Serviço de Prazos</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f6f8;
+        margin: 0;
+        padding: 40px;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    label {
+        display: block;
+        margin-top: 15px;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    input, select, button {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        font-size: 16px;
+    }
+
+    button {
+        margin-top: 25px;
+        cursor: pointer;
+    }
+
+    #resultado {
+        margin-top: 25px;
+        padding: 15px;
+        background-color: #f4f6f8;
+        border-radius: 5px;
+        display: none;
+    }
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Serviço de Prazos</h1>
+
+    <form id="prazoForm">
+
+        <label for="dataInicial">
+            Data inicial
+        </label>
+
+        <input
+            type="date"
+            id="dataInicial"
+            name="dataInicial"
+            required
+        >
+
+        <label for="quantidade">
+            Quantidade de dias
+        </label>
+
+        <input
+            type="number"
+            id="quantidade"
+            name="quantidade"
+            min="1"
+            required
+        >
+
+        <label for="tipoPrazo">
+            Tipo de Prazo
+        </label>
+
+        <select id="tipoPrazo" name="tipoPrazo" required>
+            <option value="CORRIDO">Dias corridos</option>
+            <option value="UTIL">Dias úteis</option>
+        </select>
+
+        <button type="submit">
+            Calcular prazo
+        </button>
+
+    </form>
+
+    <div id="resultado"></div>
+
+</div>
+
+<script>
+    document
+        .getElementById("prazoForm")
+        .addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+            const dataInicial =
+                document.getElementById("dataInicial").value;
+
+            const quantidade =
+                document.getElementById("quantidade").value;
+
+            const tipoPrazo =
+                document.getElementById("tipoPrazo").value;
+
+            const resultado = 
+                document.getElementById("resultado");
+
+            try {
+
+                const resposta = await fetch (
+                    "/prazo/v1/apuracao",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            inicio: dataInicial,
+                            quantidade: Number(quantidade),
+                            unidade: "DIAS",
+                            regra: tipoPrazo === "UTIL" ? "DIAS" : "CORRIDOS"
+                        })
+                    }
+                );
+
+                const dados = await resposta.json();
+
+                resultado.style.display = "block";
+
+                if (resposta.ok) {
+
+                    resultado.innerHTML =
+                        "<strong> Data de vencimento:</strong> "
+                        + dados.vencimento;
+
+                } else {
+
+                    resultado.innerHTML = 
+                        "<strong>Erro:</strong> "
+                        + (dados.mensagem || "Não foi possível calcular o prazo.");
+
+                }
+
+            } catch (erro) {
+
+                resultado.style.display = "block";
+
+                resultado.innerHTML = 
+                    "<strong>Erro:</strong> Não foi possível conectar com a API.";
+            }
+            
+        });
+</script>
+
+</body>
+
+</html>
